@@ -1,11 +1,12 @@
+# %%
 import requests
 import pandas as pd
 import yamlparam
 import numpy as np
-
 from clickhouse_driver import Client
-
 import logging
+
+#%%
 
 def ScrapCovidDataFromGoogle():
     logging.info('Started scrapping covid 19 data from google website')
@@ -36,6 +37,10 @@ def ScrapCovidDataFromGoogle():
     # change column data type to int
     covid_dataframe['NewCasesOneday'] = covid_dataframe['NewCasesOneday'].astype(int)
     covid_dataframe['NewCaseslastSixtyday'] = covid_dataframe['NewCaseslastSixtyday'].astype(int)
+    # add current date column
+    covid_dataframe['Date'] = pd.to_datetime('today').strftime("%m-%d-%Y")
+    # convert string to date datatypes
+    covid_dataframe['Date']  = covid_dataframe['Date'].astype('datetime64[ns]')
     # create clickhouse table
     client.execute(
         """
@@ -45,7 +50,8 @@ def ScrapCovidDataFromGoogle():
             NewCasesOneday UInt64,
             NewCaseslastSixtyday UInt64,
             CasesPerOneMllionPeople UInt64,
-            Deaths UInt64
+            Deaths UInt64,
+            Date Date
         ) Engine=MergeTree ORDER BY (Location)
         """
     )
@@ -56,4 +62,6 @@ def ScrapCovidDataFromGoogle():
     # store covid dataframe data into csv file
     #covid_dataframe.to_csv(param.get('DataFile'))
 
+# %%
 ScrapCovidDataFromGoogle()
+# %%
