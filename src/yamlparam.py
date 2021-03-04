@@ -5,7 +5,7 @@ import yaml
 import pathlib
 
 
-def load_yaml_to_public_holiday_dict() -> dict:
+def load_yaml_to_dict() -> dict:
     """
         Function that returns all the parameter from 2 standard yaml files as dictionary
         First project.yaml two folder up, at project level

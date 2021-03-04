@@ -10,13 +10,13 @@ import logging
 
 def ScrapCovidDataFromGoogle():
     logging.info('Started scrapping covid 19 data from google website')
-    # read parameters project level, 2 folder above
-    param = yamlparam.load_yaml_to_public_holiday_dict()
+    # load yaml configuration
+    param = yamlparam.load_yaml_to_dict()
+    # clickhouse connection
     client = Client(param.get('CLICKHOUSE_HOST'))
+    TableName = param.get('TableName')
     # set the logging level of the handler as per parameter
     logging.getLogger().handlers[0].setLevel(param.get('vLoggingLevel', 'INFO').upper())
-    # load yaml configuration
-    param = yamlparam.load_yaml_to_public_holiday_dict()
     # website url to scrap data
     covid_url = 'https://news.google.com/covid19/map?hl=en-US&mid=%2Fm%2F02j71&gl=US&ceid=US%3Aen'
     # requesting data from given url in html format using GET 
@@ -43,8 +43,9 @@ def ScrapCovidDataFromGoogle():
     covid_dataframe['Date']  = covid_dataframe['Date'].astype('datetime64[ns]')
     # create clickhouse table
     client.execute(
-        """
-        CREATE TABLE IF NOT EXISTS COVID.COVID_DATA (
+        '''
+        CREATE TABLE IF NOT EXISTS COVID.'''+TableName+''' 
+        (
             Location String,
             TotalCases UInt64,
             NewCasesOneday UInt64,
@@ -53,12 +54,12 @@ def ScrapCovidDataFromGoogle():
             Deaths UInt64,
             Date Date
         ) Engine=MergeTree ORDER BY (Location)
-        """
+        '''
     )
-    # first, trunctate the table to avoid duplicates
-    client.execute("""TRUNCATE TABLE IF EXISTS COVID.COVID_DATA""")
+    # first, delete duplicate data
+    client.execute('''TRUNCATE TABLE IF EXISTS COVID.'''+TableName+''' ;''')
     # insert data into clickhouse database
-    client.execute("INSERT INTO COVID.COVID_DATA VALUES", covid_dataframe.to_dict('records'))
+    client.execute("INSERT INTO COVID."+TableName+" VALUES", covid_dataframe.to_dict('records'))
     # store covid dataframe data into csv file
     #covid_dataframe.to_csv(param.get('DataFile'))
 

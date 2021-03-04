@@ -1,5 +1,5 @@
 #DataFile: /home/thales/WebScrapping/data.csv
 
 CLICKHOUSE_HOST: 'localhost'
-
+TableName: 'COVID_DATA'
 vtest: data
